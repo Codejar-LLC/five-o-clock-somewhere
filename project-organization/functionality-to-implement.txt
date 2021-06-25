@@ -1,0 +1,21 @@
+Functionality - 5O'CS
+
+Employee:
+	
+	Clock in / Clock out
+		* Should only be saved if longer than 15 mins?
+	Log actions per work period
+		* Should only be prompted when working for more than 15 mins??
+	Check profile
+		* Visible: Name, email used, hours worked (maybe a little graph here?), change password
+	??
+	
+Employer:
+	
+	See total hours paid / to be paid
+	Be able to access a list of logged hours / actions for each employee
+	
+System :
+	
+	Push notification to employee when clocked in for a long time
+	
