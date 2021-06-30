@@ -11,3 +11,4 @@
 .idea/modules.xml
 # Express / Node
 node_modules
+backend/dist
