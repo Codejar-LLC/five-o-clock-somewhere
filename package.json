@@ -3,10 +3,22 @@
   "version": "1.0.0",
   "main": "dist/index",
   "dependencies": {
-    "express": "^4.17.1"
+    "@mikro-orm/cli": "^4.5.7",
+    "@mikro-orm/core": "^4.5.7",
+    "@mikro-orm/migrations": "^4.5.7",
+    "@mikro-orm/postgresql": "^4.5.7",
+    "express": "^4.17.1",
+    "pg": "^8.6.0"
   },
   "devDependencies": {
     "@types/node": "^15.12.5",
     "typescript": "^4.3.4"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./backend/src/mikro-orm.config.ts",
+      "./backend/dist/mikro-orm.config.js"
+    ]
   }
 }
