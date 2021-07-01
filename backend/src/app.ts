@@ -1,8 +1,9 @@
+import "reflect-metadata";
 import {MikroORM} from "@mikro-orm/core";
 import microConfig from "./mikro-orm.config";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import {HelloResolver} from "./resolvers/hello";
+import {WorkEventResolver} from "./resolvers/workEventResolvers";
 
 const express = require('express');
 const PORT : number = Number(process.env.PORT) || 3000;
@@ -14,12 +15,12 @@ const main = async () => {
 
     // Create instance of express object
     const app = express();
-
     const apollo = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver],
+            resolvers: [WorkEventResolver],
             validate: false,
         }),
+        context: () => ({ em : orm.em })
     });
 
     apollo.applyMiddleware({ app });
