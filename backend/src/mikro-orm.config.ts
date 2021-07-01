@@ -9,6 +9,10 @@ export default {
         pattern: /^[\w-]+\d+\.[tj]s$/, // regex pattern for the migration files
     },
     entities: [User, WorkEvent],
-    dbName: 'focs-db',
+    dbName: 'temp',
     type: `postgresql`,
+    user: 'postgres',
+    password: 'Hayd3n!',
+    host: 'localhost',
+    port: 5432,
 } as Parameters<typeof MikroORM.init>[0];
