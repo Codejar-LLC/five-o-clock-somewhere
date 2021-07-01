@@ -7,13 +7,13 @@ export class WorkEvent {
     @PrimaryKey()
     id !: number;
 
-    @Property()
-    clockIn = new Date();
+    @Property({type: 'date'})
+    clock_in = new Date();
 
-    @Property()
-    clockOut = new Date();
+    @Property({type: 'date'})
+    clock_out = new Date();
 
     @ManyToOne(() => User)
-    user!: User;
+    user !: User;
 
 }

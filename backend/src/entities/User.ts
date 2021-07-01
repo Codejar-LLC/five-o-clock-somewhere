@@ -1,5 +1,5 @@
-import {Entity, PrimaryKey, Property} from "@mikro-orm/core";
-// import {WorkEvent} from "./WorkEvent";
+import {Entity, OneToMany, PrimaryKey, Property} from "@mikro-orm/core";
+import {WorkEvent} from "./WorkEvent";
 
 @Entity()
 export class User {
@@ -25,6 +25,7 @@ export class User {
     @Property()
     paid_work_time !: number;
 
-    // @OneToMany(() => WorkEvent)
-    // workEvent !: WorkEvent;
+    @OneToMany(() => WorkEvent, (workEvent) => workEvent.user)
+    work_events !: WorkEvent[];
+
 }
