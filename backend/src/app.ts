@@ -5,8 +5,10 @@ const express = require('express');
 const PORT : number = Number(process.env.PORT) || 3000;
 
 const main = async () => {
+
     const orm = await MikroORM.init(microConfig);
-    console.log(orm.em);
+    await orm.getMigrator().up();
+
     // Create instance of express object
     const app = express();
     app.listen(PORT, () => {

@@ -7,9 +7,12 @@
     "@mikro-orm/core": "^4.5.7",
     "@mikro-orm/migrations": "^4.5.7",
     "@mikro-orm/postgresql": "^4.5.7",
+    "apollo-server-express": "^2.25.2",
     "express": "^4.17.1",
+    "graphql": "^15.5.1",
     "pg": "^8.6.0",
-    "ts-node": "^10.0.0"
+    "ts-node": "^10.0.0",
+    "type-graphql": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^15.12.5",
