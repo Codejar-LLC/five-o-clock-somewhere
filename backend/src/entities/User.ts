@@ -1,9 +1,11 @@
 import {Entity, OneToMany, PrimaryKey, Property} from "@mikro-orm/core";
 import {WorkEvent} from "./WorkEvent";
+import {Field} from "type-graphql";
 
 @Entity()
 export class User {
 
+    @Field()
     @PrimaryKey()
     id !: number;
 
