@@ -10,11 +10,11 @@ export class WorkEvent {
     @PrimaryKey()
     id !: number;
 
-    @Field(() => Date)
+    @Field(() => String)
     @Property({type: 'date'})
     clock_in = new Date();
 
-    @Field(() => Date)
+    @Field(() => String)
     @Property({type: 'date'})
     clock_out = new Date();
 

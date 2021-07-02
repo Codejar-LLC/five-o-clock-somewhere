@@ -34,7 +34,7 @@ export class User {
     @Property()
     paid_work_time !: number;
 
-    @Field(() => [WorkEvent])
+    @Field(() => [WorkEvent], {defaultValue: []})
     @OneToMany(() => WorkEvent, (workEvent) => workEvent.user)
     work_events !: WorkEvent[];
 

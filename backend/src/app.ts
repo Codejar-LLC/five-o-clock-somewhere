@@ -4,6 +4,7 @@ import microConfig from "./mikro-orm.config";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import {WorkEventResolver} from "./resolvers/workEventResolvers";
+import {UserResolver} from "./resolvers/userResolver";
 
 const express = require('express');
 const PORT : number = Number(process.env.PORT) || 3000;
@@ -17,7 +18,7 @@ const main = async () => {
     const app = express();
     const apollo = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [WorkEventResolver],
+            resolvers: [WorkEventResolver, UserResolver],
             validate: false,
         }),
         context: () => ({ em : orm.em })
