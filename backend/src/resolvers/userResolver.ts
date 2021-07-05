@@ -2,6 +2,7 @@ import {Arg, Ctx, Field, InputType, Int, Mutation, Query, Resolver} from "type-g
 import {MyCtx} from "../types";
 import {User} from "../entities/User";
 import {WorkEvent} from "../entities/WorkEvent";
+import argon2 from "argon2";
 
 @InputType()
 class WorkEventInput implements Partial<WorkEvent> {
@@ -62,15 +63,24 @@ export class UserResolver {
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
                      @Ctx() {em}: MyCtx): Promise<User | null> {
         try {
+            const hashedPass = await argon2.hash(password);
             const user = em.create(User, {
-                first_name, last_name, username, password, total_time_working,
-                paid_work_time, work_events
+                first_name, last_name, username, total_time_working, password: hashedPass, paid_work_time, work_events
             });
             await em.persistAndFlush(user);
             return user;
         } catch {
             throw new Error("Username already exists");
         }
+    }
+
+    @Mutation(() => Boolean)
+    async login(
+        @Arg("username") username : string,
+        @Arg("password") password : string,
+        @Ctx() {em}: MyCtx): Promise<boolean> {
+            const user = await em.findOneOrFail(User, {username});
+            return await argon2.verify(user.password, password);
     }
 
     /**
