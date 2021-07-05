@@ -1,7 +1,8 @@
-import {Arg, Ctx, Field, InputType, Int, Mutation, Query, Resolver} from "type-graphql";
+import {Arg, Ctx, Field, InputType, Int, Mutation, ObjectType, Query, Resolver} from "type-graphql";
 import {MyCtx} from "../types";
 import {User} from "../entities/User";
 import {WorkEvent} from "../entities/WorkEvent";
+import argon2 from "argon2";
 
 @InputType()
 class WorkEventInput implements Partial<WorkEvent> {
@@ -11,24 +12,78 @@ class WorkEventInput implements Partial<WorkEvent> {
     clock_out : Date;
 }
 
+@ObjectType()
+class FieldError {
+    @Field()
+    field: string
+
+    @Field()
+    message: string
+}
+
+@ObjectType()
+class Response {
+    @Field(() => [FieldError], {nullable: true})
+    errors ?: FieldError[]
+
+    @Field(() => User, {nullable : true})
+    user ?: User;
+}
+
 @Resolver()
 export class UserResolver {
-    // Shows that this can be queried and that this query returns a user, { nullable : true } shows that null can be
-    // returned if the user is not found.
-    @Query(() => User, {nullable : true})
-    // Method findUser that takes in ID to return user info. Can be queried by using findUser(id: x) { first_name, ... }
-    // @Arg represents the parameters used in GraphQL, "id" can be changed to any word. Can have many @Arg
-    // Typescript means that the context will return a promise that has to match the method, so by putting |, it
-    // shows that the Promise could return either a User or null
-    findUser(@Arg("id", () => Int) id: number, @Ctx() {em}: MyCtx): Promise<User | null> {
-        return em.findOne(User, {id});
+
+    /**
+     * Method to find specific user based on id.
+     * Query means that something is being looked for in DB
+     * Arg is a param, Ctx is the context (mikro-ORM is being used in context to edit DB)
+     *
+     * @param id Id number of user being searched for
+     * @param em Context
+     * @returns Response The user that is being searched for or an error if it is not found
+     */
+    @Query(() => Response, )
+    async findUser(@Arg("id", () => Int) id: number, @Ctx() {em}: MyCtx): Promise<Response> {
+        const user = await em.findOne(User, {id});
+        if (user) {
+            return { user }
+        } else {
+            return {
+                errors : [
+                    {
+                        field: "Users",
+                        message: "A user with this ID cannot be found."
+                    },
+                ],
+            }
+        }
     }
 
-    // @Mutation is used for creating and updating data in the db.
-    @Mutation(() => User)
-    // Can call in GraphQL playground using mutation { createUser(....) }
-    // The argument here is the class UserInput, which is a @InputType class defined above
-    // @Ctx represents the context of the argument, and is how you connect Mikro-ORM, which allows you to edit db
+    /**
+     * Returns list of all users.
+     *
+     * @param em Context
+     * @returns User[] An array of all users in the DB
+     */
+    @Query(() => [User], {nullable: true})
+    users(@Ctx() {em}: MyCtx) : Promise<User[] | null> {
+        return em.find(User, {});
+    }
+
+    /**
+     * Method to create a new user in Type GraphQL
+     *
+     * @param first_name User's first name
+     * @param last_name User's last name
+     * @param username User's username
+     * @param password User's password
+     * @param total_time_working Time worked overall in minutes. Defaults to 0
+     * @param paid_work_time Time worked in minutes that has been paid for. Defaults to 0.
+     * @param work_events Array of work events that defaults to empty
+     * @param em Context
+     * @returns User that is created
+     */
+    @Mutation(() => Response, {nullable : true})
     async createUser(@Arg("first_name") first_name : string,
                      @Arg("last_name") last_name : string,
                      @Arg("username") username : string,
@@ -36,10 +91,125 @@ export class UserResolver {
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
                      @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
-                     @Ctx() {em}: MyCtx): Promise<User> {
-        const user = em.create(User, {first_name, last_name, username, password, total_time_working,
-            paid_work_time, work_events});
-        await em.persistAndFlush(user);
-        return user;
+                     @Ctx() {em}: MyCtx): Promise<Response | null> {
+        try {
+            if (username.length <= 3) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "Length of username must be longer than 3 characters"
+                        },
+                    ],
+                }
+            } else if (password.length <= 3) {
+                return {
+                    errors: [
+                        {
+                            field: "password",
+                            message: "Length of the password must be longer than 3 characters"
+                        },
+                    ],
+                }
+            } else if (first_name.length === 0) {
+                return {
+                    errors: [
+                        {
+                            field: "first name",
+                            message: "You must input your first name"
+                        },
+                    ],
+                }
+            } else if (last_name.length === 0) {
+                return {
+                    errors: [
+                        {
+                            field: "last name",
+                            message: "You must input your last name"
+                        },
+                    ],
+                }
+            }
+            const hashedPass = await argon2.hash(password);
+            const user = em.create(User, {
+                first_name, last_name, username, total_time_working, password: hashedPass, paid_work_time, work_events
+            });
+            await em.persistAndFlush(user);
+            return { user};
+        } catch (e) {
+            if (e.code === "23505") {
+                return {
+                    errors : [
+                        {
+                            field: "username",
+                            message: "Account with this username already exists."
+                        },
+                    ],
+                }
+            }
+            return {
+                errors : [
+                    {
+                        field: "Uncaught error",
+                        message: e.message()
+                    },
+                ],
+            }
+        }
+    }
+
+    /**
+     * Login for user
+     *
+     * @param username Username of user
+     * @param password Password of User
+     * @param em Context
+     * @returns boolean True if successful login, otherwise false
+     */
+    @Mutation(() => Response)
+    async login(
+        @Arg("username") username : string,
+        @Arg("password") password : string,
+        @Ctx() {em}: MyCtx): Promise<Response> {
+            const user = await em.findOne(User, {username});
+            if (!user) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "The username is not correct"
+                        },
+                    ],
+                }
+            } else if (!(await argon2.verify(user.password, password))) {
+                return {
+                    errors: [
+                        {
+                            field: "password",
+                            message: "Your password is incorrect"
+                        },
+                    ],
+                }
+            }
+            return {
+                user,
+            };
+    }
+
+    /**
+     * A method to delete a previously created user.
+     *
+     * @param id ID of the user being deleted
+     * @param em The context
+     * @returns boolean true if successfully deleted, false if not
+     */
+    @Mutation(() => Boolean)
+    async deleteUser(@Arg("id") id : number, @Ctx() {em}: MyCtx): Promise<boolean> {
+        try {
+            await em.nativeDelete(User, {id})
+        } catch {
+            return false;
+        }
+        return true;
     }
 }

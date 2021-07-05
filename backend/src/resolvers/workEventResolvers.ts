@@ -6,11 +6,23 @@ import {MyCtx} from "../types";
 @Resolver()
 export class WorkEventResolver {
 
+    /**
+     * Method to return an array of work events in the DB.
+     *
+     * @param em The context
+     * @returns WorkEvent[] Array of all work events
+     */
     @Query(() => [WorkEvent])
     workEvents(@Ctx() {em}: MyCtx): Promise<WorkEvent[]> {
         return em.find(WorkEvent, {});
     }
 
+    /**
+     * Method to create a new work event
+     *
+     * @param em The context
+     * @returns workEvent newly created work event
+     */
     @Mutation(() => WorkEvent)
     async createWorkEvent(@Ctx() {em}: MyCtx): Promise<WorkEvent> {
         const workEvent = em.create(WorkEvent, {});

@@ -19,10 +19,9 @@ export class User {
     last_name !: string;
 
     @Field()
-    @Property()
+    @Property({unique: true})
     username !: string;
 
-    @Field()
     @Property()
     password !: string
 
