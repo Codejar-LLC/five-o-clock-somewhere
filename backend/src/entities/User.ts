@@ -22,7 +22,6 @@ export class User {
     @Property({unique: true})
     username !: string;
 
-    @Field()
     @Property()
     password !: string
 
