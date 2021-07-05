@@ -1,4 +1,4 @@
-import {Arg, Ctx, Field, InputType, Int, Mutation, Query, Resolver} from "type-graphql";
+import {Arg, Ctx, Field, InputType, Int, Mutation, ObjectType, Query, Resolver} from "type-graphql";
 import {MyCtx} from "../types";
 import {User} from "../entities/User";
 import {WorkEvent} from "../entities/WorkEvent";
@@ -10,6 +10,25 @@ class WorkEventInput implements Partial<WorkEvent> {
     clock_in : Date;
     @Field({nullable : true})
     clock_out : Date;
+}
+
+@ObjectType()
+class FieldError {
+    @Field()
+    field: string
+
+    @Field()
+    message: string
+}
+
+@ObjectType()
+class Response {
+
+    @Field(() => [FieldError], {nullable: true})
+    errors ?: FieldError[]
+
+    @Field(() => User, {nullable : true})
+    user ?: User;
 }
 
 @Resolver()
@@ -53,7 +72,7 @@ export class UserResolver {
      * @param em Context
      * @returns User that is created
      */
-    @Mutation(() => User, {nullable : true})
+    @Mutation(() => Response, {nullable : true})
     async createUser(@Arg("first_name") first_name : string,
                      @Arg("last_name") last_name : string,
                      @Arg("username") username : string,
@@ -61,26 +80,101 @@ export class UserResolver {
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
                      @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
-                     @Ctx() {em}: MyCtx): Promise<User | null> {
+                     @Ctx() {em}: MyCtx): Promise<Response | null> {
         try {
+            if (username.length <= 3) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "Length of username must be longer than 3 characters"
+                        },
+                    ],
+                }
+            } else if (password.length <= 3) {
+                return {
+                    errors: [
+                        {
+                            field: "password",
+                            message: "Length of the password must be longer than 3 characters"
+                        },
+                    ],
+                }
+            } else if (first_name.length === 0) {
+                return {
+                    errors: [
+                        {
+                            field: "first name",
+                            message: "You must input your first name"
+                        },
+                    ],
+                }
+            } else if (last_name.length === 0) {
+                return {
+                    errors: [
+                        {
+                            field: "last name",
+                            message: "You must input your last name"
+                        },
+                    ],
+                }
+            }
             const hashedPass = await argon2.hash(password);
             const user = em.create(User, {
                 first_name, last_name, username, total_time_working, password: hashedPass, paid_work_time, work_events
             });
             await em.persistAndFlush(user);
-            return user;
+            return {
+                user
+            };
         } catch {
-            throw new Error("Username already exists");
+            return {
+                errors : [
+                    {
+                        field: "username",
+                        message: "Account with this username already exists."
+                    },
+                ],
+            }
         }
     }
 
-    @Mutation(() => Boolean)
+    /**
+     * Login for user
+     *
+     * @param username Username of user
+     * @param password Password of User
+     * @param em Context
+     * @returns boolean True if successful login, otherwise false
+     */
+    @Mutation(() => Response)
     async login(
         @Arg("username") username : string,
         @Arg("password") password : string,
-        @Ctx() {em}: MyCtx): Promise<boolean> {
-            const user = await em.findOneOrFail(User, {username});
-            return await argon2.verify(user.password, password);
+        @Ctx() {em}: MyCtx): Promise<Response> {
+            const user = await em.findOne(User, {username});
+            if (!user) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "The username is not correct"
+                        },
+                    ],
+                }
+            } else if (!(await argon2.verify(user.password, password))) {
+                return {
+                    errors: [
+                        {
+                            field: "password",
+                            message: "Your password is incorrect"
+                        },
+                    ],
+                }
+            }
+            return {
+                user,
+            };
     }
 
     /**
