@@ -135,15 +135,23 @@ export class UserResolver {
                 first_name, last_name, username, total_time_working, password: hashedPass, paid_work_time, work_events
             });
             await em.persistAndFlush(user);
-            return {
-                user
-            };
-        } catch {
+            return { user};
+        } catch (e) {
+            if (e.code === "23505") {
+                return {
+                    errors : [
+                        {
+                            field: "username",
+                            message: "Account with this username already exists."
+                        },
+                    ],
+                }
+            }
             return {
                 errors : [
                     {
-                        field: "username",
-                        message: "Account with this username already exists."
+                        field: "Uncaught error",
+                        message: e.message()
                     },
                 ],
             }
