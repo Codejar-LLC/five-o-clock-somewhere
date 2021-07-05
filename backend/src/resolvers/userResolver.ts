@@ -34,11 +34,11 @@ export class UserResolver {
                      @Arg("username") username : string,
                      @Arg("password") password : string,
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
-                     @Arg("total_time_paid", {defaultValue : 0}) total_time_paid : number,
+                     @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
                      @Ctx() {em}: MyCtx): Promise<User> {
-        const user = em.create(User, {first_name, last_name, username, password,
-            total_time_working, total_time_paid, work_events});
+        const user = em.create(User, {first_name, last_name, username, password, total_time_working,
+            paid_work_time, work_events});
         await em.persistAndFlush(user);
         return user;
     }
