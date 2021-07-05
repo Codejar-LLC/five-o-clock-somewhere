@@ -23,7 +23,6 @@ class FieldError {
 
 @ObjectType()
 class Response {
-
     @Field(() => [FieldError], {nullable: true})
     errors ?: FieldError[]
 
@@ -41,11 +40,23 @@ export class UserResolver {
      *
      * @param id Id number of user being searched for
      * @param em Context
-     * @returns User The user that is being searched for or null if it is not found
+     * @returns Response The user that is being searched for or an error if it is not found
      */
-    @Query(() => User, {nullable : true})
-    findUser(@Arg("id", () => Int) id: number, @Ctx() {em}: MyCtx): Promise<User | null> {
-        return em.findOne(User, {id});
+    @Query(() => Response, )
+    async findUser(@Arg("id", () => Int) id: number, @Ctx() {em}: MyCtx): Promise<Response> {
+        const user = await em.findOne(User, {id});
+        if (user) {
+            return { user }
+        } else {
+            return {
+                errors : [
+                    {
+                        field: "Users",
+                        message: "A user with this ID cannot be found."
+                    },
+                ],
+            }
+        }
     }
 
     /**
