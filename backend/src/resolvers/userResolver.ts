@@ -52,7 +52,7 @@ export class UserResolver {
      * @param em Context
      * @returns User that is created
      */
-    @Mutation(() => User)
+    @Mutation(() => User, {nullable : true})
     async createUser(@Arg("first_name") first_name : string,
                      @Arg("last_name") last_name : string,
                      @Arg("username") username : string,
@@ -60,11 +60,17 @@ export class UserResolver {
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
                      @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
-                     @Ctx() {em}: MyCtx): Promise<User> {
-        const user = em.create(User, {first_name, last_name, username, password, total_time_working,
-            paid_work_time, work_events});
-        await em.persistAndFlush(user);
-        return user;
+                     @Ctx() {em}: MyCtx): Promise<User | null> {
+        try {
+            const user = em.create(User, {
+                first_name, last_name, username, password, total_time_working,
+                paid_work_time, work_events
+            });
+            await em.persistAndFlush(user);
+            return user;
+        } catch {
+            throw new Error("Username already exists");
+        }
     }
 
     /**
