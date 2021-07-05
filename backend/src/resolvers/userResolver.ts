@@ -13,22 +13,46 @@ class WorkEventInput implements Partial<WorkEvent> {
 
 @Resolver()
 export class UserResolver {
-    // Shows that this can be queried and that this query returns a user, { nullable : true } shows that null can be
-    // returned if the user is not found.
+
+    /**
+     * Method to find specific user based on id.
+     * Query means that something is being looked for in DB
+     * Arg is a param, Ctx is the context (mikro-ORM is being used in context to edit DB)
+     *
+     * @param id Id number of user being searched for
+     * @param em Context
+     * @returns User The user that is being searched for or null if it is not found
+     */
     @Query(() => User, {nullable : true})
-    // Method findUser that takes in ID to return user info. Can be queried by using findUser(id: x) { first_name, ... }
-    // @Arg represents the parameters used in GraphQL, "id" can be changed to any word. Can have many @Arg
-    // Typescript means that the context will return a promise that has to match the method, so by putting |, it
-    // shows that the Promise could return either a User or null
     findUser(@Arg("id", () => Int) id: number, @Ctx() {em}: MyCtx): Promise<User | null> {
         return em.findOne(User, {id});
     }
 
-    // @Mutation is used for creating and updating data in the db.
+    /**
+     * Returns list of all users.
+     *
+     * @param em Context
+     * @returns User[] An array of all users in the DB
+     */
+    @Query(() => [User], {nullable: true})
+    users(@Ctx() {em}: MyCtx) : Promise<User[] | null> {
+        return em.find(User, {});
+    }
+
+    /**
+     * Method to create a new user in Type GraphQL
+     *
+     * @param first_name User's first name
+     * @param last_name User's last name
+     * @param username User's username
+     * @param password User's password
+     * @param total_time_working Time worked overall in minutes. Defaults to 0
+     * @param paid_work_time Time worked in minutes that has been paid for. Defaults to 0.
+     * @param work_events Array of work events that defaults to empty
+     * @param em Context
+     * @returns User that is created
+     */
     @Mutation(() => User)
-    // Can call in GraphQL playground using mutation { createUser(....) }
-    // The argument here is the class UserInput, which is a @InputType class defined above
-    // @Ctx represents the context of the argument, and is how you connect Mikro-ORM, which allows you to edit db
     async createUser(@Arg("first_name") first_name : string,
                      @Arg("last_name") last_name : string,
                      @Arg("username") username : string,
@@ -41,5 +65,22 @@ export class UserResolver {
             paid_work_time, work_events});
         await em.persistAndFlush(user);
         return user;
+    }
+
+    /**
+     * A method to delete a previously created user.
+     *
+     * @param id ID of the user being deleted
+     * @param em The context
+     * @returns boolean true if successfully deleted, false if not
+     */
+    @Mutation(() => Boolean)
+    async deleteUser(@Arg("id") id : number, @Ctx() {em}: MyCtx): Promise<boolean> {
+        try {
+            await em.nativeDelete(User, {id})
+        } catch {
+            return false;
+        }
+        return true;
     }
 }
