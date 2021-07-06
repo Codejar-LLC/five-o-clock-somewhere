@@ -191,9 +191,7 @@ export class UserResolver {
                     ],
                 }
             }
-            return {
-                user,
-            };
+            return { user };
     }
 
     /**
@@ -205,11 +203,12 @@ export class UserResolver {
      */
     @Mutation(() => Boolean)
     async deleteUser(@Arg("id") id : number, @Ctx() {em}: MyCtx): Promise<boolean> {
-        try {
-            await em.nativeDelete(User, {id})
-        } catch {
+        const user = await em.findOne(User, {id});
+        if (user) {
+            await em.nativeDelete(User, {id});
+            return true;
+        } else {
             return false;
         }
-        return true;
     }
 }
