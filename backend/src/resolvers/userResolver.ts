@@ -75,7 +75,7 @@ export class UserResolver {
      *
      * @param first_name User's first name
      * @param last_name User's last name
-     * @param username User's username
+     * @param email User's email
      * @param password User's password
      * @param total_time_working Time worked overall in minutes. Defaults to 0
      * @param paid_work_time Time worked in minutes that has been paid for. Defaults to 0.
@@ -86,19 +86,19 @@ export class UserResolver {
     @Mutation(() => Response, {nullable : true})
     async createUser(@Arg("first_name") first_name : string,
                      @Arg("last_name") last_name : string,
-                     @Arg("username") username : string,
+                     @Arg("email") email : string,
                      @Arg("password") password : string,
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
                      @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
                      @Ctx() {em}: MyCtx): Promise<Response | null> {
         try {
-            if (username.length <= 3) {
+            if (!(email.includes("@") && email.includes("."))) {
                 return {
                     errors: [
                         {
-                            field: "username",
-                            message: "Length of username must be longer than 3 characters"
+                            field: "email",
+                            message: "Invalid email"
                         },
                     ],
                 }
@@ -132,7 +132,7 @@ export class UserResolver {
             }
             const hashedPass = await argon2.hash(password);
             const user = em.create(User, {
-                first_name, last_name, username, total_time_working, password: hashedPass, paid_work_time, work_events
+                first_name, last_name, email, total_time_working, password: hashedPass, paid_work_time, work_events
             });
             await em.persistAndFlush(user);
             return { user};
@@ -141,8 +141,8 @@ export class UserResolver {
                 return {
                     errors : [
                         {
-                            field: "username",
-                            message: "Account with this username already exists."
+                            field: "email",
+                            message: "Account with this email already exists."
                         },
                     ],
                 }
@@ -151,7 +151,7 @@ export class UserResolver {
                 errors : [
                     {
                         field: "Uncaught error",
-                        message: e.message()
+                        message: e.error()
                     },
                 ],
             }
@@ -161,23 +161,23 @@ export class UserResolver {
     /**
      * Login for user
      *
-     * @param username Username of user
+     * @param email Email of user
      * @param password Password of User
      * @param em Context
      * @returns boolean True if successful login, otherwise false
      */
     @Mutation(() => Response)
     async login(
-        @Arg("username") username : string,
+        @Arg("email") email : string,
         @Arg("password") password : string,
         @Ctx() {em}: MyCtx): Promise<Response> {
-            const user = await em.findOne(User, {username});
+            const user = await em.findOne(User, {email});
             if (!user) {
                 return {
                     errors: [
                         {
-                            field: "username",
-                            message: "The username is not correct"
+                            field: "email",
+                            message: "The email is not correct"
                         },
                     ],
                 }
