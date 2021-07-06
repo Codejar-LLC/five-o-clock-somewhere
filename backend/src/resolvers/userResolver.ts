@@ -33,6 +33,14 @@ class Response {
 @Resolver()
 export class UserResolver {
 
+    @Query(() => User, {nullable: true})
+    async me(@Ctx() {req, em}: MyCtx) {
+        if (!req.session.userId) {
+            return null;
+        }
+        return await em.findOne(User, {id: req.session.userId})
+    }
+
     /**
      * Method to find specific user based on id.
      * Query means that something is being looked for in DB
@@ -81,6 +89,7 @@ export class UserResolver {
      * @param paid_work_time Time worked in minutes that has been paid for. Defaults to 0.
      * @param work_events Array of work events that defaults to empty
      * @param em Context
+     * @param req Request from context
      * @returns User that is created
      */
     @Mutation(() => Response, {nullable : true})
@@ -91,7 +100,7 @@ export class UserResolver {
                      @Arg("total_time_working", {defaultValue : 0}) total_time_working : number,
                      @Arg("paid_work_time", {defaultValue : 0}) paid_work_time : number,
                      @Arg("work_events", () => [WorkEventInput], {defaultValue : []}) work_events : WorkEvent[],
-                     @Ctx() {em}: MyCtx): Promise<Response | null> {
+                     @Ctx() {em, req}: MyCtx): Promise<Response | null> {
         try {
             if (!(email.includes("@") && email.includes("."))) {
                 return {
@@ -135,6 +144,7 @@ export class UserResolver {
                 first_name, last_name, email, total_time_working, password: hashedPass, paid_work_time, work_events
             });
             await em.persistAndFlush(user);
+            req.session.userId = user.id;
             return { user};
         } catch (e) {
             if (e.code === "23505") {
@@ -170,7 +180,7 @@ export class UserResolver {
     async login(
         @Arg("email") email : string,
         @Arg("password") password : string,
-        @Ctx() {em}: MyCtx): Promise<Response> {
+        @Ctx() {em, req}: MyCtx): Promise<Response> {
             const user = await em.findOne(User, {email});
             if (!user) {
                 return {
@@ -191,6 +201,7 @@ export class UserResolver {
                     ],
                 }
             }
+            req.session.userId = user.id;
             return { user };
     }
 
