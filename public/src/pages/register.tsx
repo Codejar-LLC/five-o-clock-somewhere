@@ -5,38 +5,24 @@ import {Wrapper} from "../components/Wrapper";
 import {InputField} from "../components/InputField";
 import {Box, Button, FormControl, FormLabel, Input} from "@chakra-ui/react";
 import {useMutation} from "urql";
+import {useRegisterMutation} from "../generated/graphql";
 
 interface registerProps {
 }
 
-const REGISTER_MUTATION : string = `
-mutation Register($email: String!, $pass: String!, $fname: String!, $lname: String!) {
-  createUser(
-    password: $pass
-    email: $email
-    first_name: $fname
-    last_name: $lname
-  ) {
-    errors {
-      field
-      message
-    }
-    user {
-      id
-      email
-      first_name
-      last_name
-    }
-  }
-}
-`
-
 const Register: React.FC<registerProps> = ({}) => {
-    const [, register] = useMutation(REGISTER_MUTATION);
+    const [, register] = useRegisterMutation();
     return (
         <Wrapper>
-            <Formik initialValues={{first_name: "", last_name: "", email: "", password: ""}} onSubmit={(values) => {
-                        return register({email: values.email, pass: values.password, fname: values.first_name, lname: values.last_name});}}>
+            <Formik initialValues={{first_name: "", last_name: "", email: "", password: ""}}
+                    onSubmit={async (values) => {
+                        const response = await register({
+                            email: values.email,
+                            pass: values.password,
+                            fname: values.first_name,
+                            lname: values.last_name
+                        });
+                    }}>
                 {({isSubmitting}) =>
                     <Form>
                         <InputField name='first_name' label='First Name' placeholder='first name'/>
@@ -50,7 +36,8 @@ const Register: React.FC<registerProps> = ({}) => {
                             <InputField name='password' label='Password' type='password' placeholder='password'/>
                         </Box>
                         <Box>
-                            <Button size="md" isLoading={isSubmitting} mt={4} type="submit" colorScheme="linkedin">Register</Button>
+                            <Button size="md" isLoading={isSubmitting} mt={4} type="submit"
+                                    colorScheme="linkedin">Register</Button>
                             <Button size="md" mt={4} colorScheme="green" float="right">Login</Button>
                         </Box>
                     </Form>
