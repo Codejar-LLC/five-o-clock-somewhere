@@ -1,17 +1,18 @@
 import "reflect-metadata";
 import {MikroORM} from "@mikro-orm/core";
 import microConfig from "./mikro-orm.config";
-import { ApolloServer } from "apollo-server-express";
-import { buildSchema } from "type-graphql";
+import {ApolloServer} from "apollo-server-express";
+import {buildSchema} from "type-graphql";
 import {WorkEventResolver} from "./resolvers/workEventResolvers";
 import {UserResolver} from "./resolvers/userResolver";
 import redis from 'redis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
 import {MyCtx} from "./types";
+import cors from "cors";
 
 const express = require('express');
-const PORT : number = Number(process.env.PORT) || 3000;
+const PORT: number = Number(process.env.PORT) || 4000;
 
 const main = async () => {
 
@@ -20,6 +21,11 @@ const main = async () => {
 
     // Create instance of express object
     const app = express();
+
+    app.use(cors({
+        origin: 'http://localhost:3000',
+        credentials: true
+    }))
 
     const RedisStore = connectRedis(session);
     const redisClient = redis.createClient();
@@ -42,10 +48,12 @@ const main = async () => {
             validate: false,
         }),
         context: ({req, res}): MyCtx =>
-            ({ em : orm.em, req, res })
+            ({em: orm.em, req, res})
     });
 
-    apollo.applyMiddleware({ app });
+    apollo.applyMiddleware({
+        app, cors: false
+    });
 
     app.listen(PORT, () => {
         console.log(`Listening on port ${PORT}...`);
