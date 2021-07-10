@@ -11,16 +11,18 @@ interface registerProps {
 }
 
 const Register: React.FC<registerProps> = ({}) => {
-    const [, register] = useRegisterMutation();
+    const [register] = useRegisterMutation();
     return (
         <Wrapper>
             <Formik initialValues={{first_name: "", last_name: "", email: "", password: ""}}
                     onSubmit={async (values) => {
                         const response = await register({
-                            email: values.email,
-                            pass: values.password,
-                            fname: values.first_name,
-                            lname: values.last_name
+                            variables: {
+                                email: values.email,
+                                pass: values.password,
+                                fname: values.first_name,
+                                lname: values.last_name
+                            }
                         });
                     }}>
                 {({isSubmitting}) =>
