@@ -7,10 +7,9 @@ import {Box, Button, FormControl, FormLabel, Input} from "@chakra-ui/react";
 import {useRegisterMutation} from "../generated/graphql";
 import {setErrorMap} from "../utils/setErrorMap";
 import {useRouter} from "next/router";
+import Link from 'next/link';
 
-interface registerProps {}
-
-const Register: React.FC<registerProps> = ({}) => {
+const Register: React.FC<{}> = ({}) => {
     const router = useRouter();
     const [register] = useRegisterMutation();
     return (
@@ -46,7 +45,10 @@ const Register: React.FC<registerProps> = ({}) => {
                         <Box>
                             <Button size="md" isLoading={isSubmitting} mt={4} type="submit"
                                     colorScheme="linkedin">Register</Button>
-                            <Button size="md" mt={4} colorScheme="green" float="right">Login</Button>
+                            <Link href="/login">
+                                <Button size="md" mt={4} colorScheme="green" float="right">Already Have An Account? Login
+                                    Here</Button>
+                            </Link>
                         </Box>
                     </Form>
                 }

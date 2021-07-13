@@ -7,6 +7,7 @@ import {Box, Button, FormControl, FormLabel, Input} from "@chakra-ui/react";
 import {useLoginMutation} from "../generated/graphql";
 import {setErrorMap} from "../utils/setErrorMap";
 import {useRouter} from "next/router";
+import Link from 'next/link';
 
 const Login: React.FC<{}> = ({}) => {
     const router = useRouter();
@@ -38,7 +39,10 @@ const Login: React.FC<{}> = ({}) => {
                         <Box>
                             <Button size="md" isLoading={isSubmitting} mt={4} type="submit"
                                     colorScheme="green">Login</Button>
-                            <Button size="md" mt={4} colorScheme="linkedin" float="right">Register</Button>
+                            <Link href="/register">
+                                <Button size="md" mt={4} colorScheme="linkedin" float="right">Don't Have An Account?
+                                    Register Here</Button>
+                            </Link>
                         </Box>
                     </Form>
                 }
