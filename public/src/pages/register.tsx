@@ -6,11 +6,12 @@ import {InputField} from "../components/InputField";
 import {Box, Button, FormControl, FormLabel, Input} from "@chakra-ui/react";
 import {useRegisterMutation} from "../generated/graphql";
 import {setErrorMap} from "../utils/setErrorMap";
+import {useRouter} from "next/router";
 
-interface registerProps {
-}
+interface registerProps {}
 
 const Register: React.FC<registerProps> = ({}) => {
+    const router = useRouter();
     const [register] = useRegisterMutation();
     return (
         <Wrapper>
@@ -26,7 +27,9 @@ const Register: React.FC<registerProps> = ({}) => {
                         });
                         if (response.data?.createUser?.errors) {
                             setErrors(setErrorMap(response.data.createUser.errors));
+                            return;
                         }
+                        router.push("/");
                     }}>
                 {({isSubmitting}) =>
                     <Form>
