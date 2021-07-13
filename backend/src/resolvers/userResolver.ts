@@ -60,7 +60,7 @@ export class UserResolver {
                 errors : [
                     {
                         field: "Users",
-                        message: "A user with this ID cannot be found."
+                        message: "A user with this ID cannot be found"
                     },
                 ],
             }
@@ -152,7 +152,7 @@ export class UserResolver {
                     errors : [
                         {
                             field: "email",
-                            message: "Account with this email already exists."
+                            message: "Account with this email already exists"
                         },
                     ],
                 }
@@ -187,7 +187,7 @@ export class UserResolver {
                     errors: [
                         {
                             field: "email",
-                            message: "The email is not correct"
+                            message: "A user with this email does not exist"
                         },
                     ],
                 }
