@@ -145,7 +145,7 @@ export class UserResolver {
             });
             await em.persistAndFlush(user);
             req.session.userId = user.id;
-            return { user};
+            return { user };
         } catch (e) {
             if (e.code === "23505") {
                 return {
